@@ -13,7 +13,7 @@ from flask import Flask, request, jsonify, send_from_directory, session, redirec
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import generate_password_hash, check_password_hash
-from db_connect import get_connection
+from backend.db_connect import get_connection 
 from functools import wraps
 import os
 
