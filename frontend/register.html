@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register | Querra</title>
+    <!-- Redirect to the new unified auth page -->
+    <meta http-equiv="refresh" content="0; url=/login">
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body class="auth-page">
+    <div class="auth-card text-center">
+      <div class="loader" style="margin:0 auto 16px;"></div>
+      <h2>Redirecting...</h2>
+      <p>Taking you to the unified login portal.</p>
+      <a href="/login" class="auth-link">Click here if not redirected</a>
+    </div>
+  
+<div id="logoutModalOverlay" class="logout-modal-overlay">
+  <div class="logout-modal">
+    <h3 style="margin-bottom:12px;"><i class="fa fa-right-from-bracket" style="color:var(--accent);"></i> Logout</h3>
+    <p style="margin-bottom:24px;" class="muted">Are you sure you want to logout?</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-outline" onclick="document.getElementById('logoutModalOverlay').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<script>
+  if(document.getElementById('logoutLink')) {
+    document.getElementById('logoutLink').replaceWith(document.getElementById('logoutLink').cloneNode(true));
+    document.getElementById('logoutLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('logoutModalOverlay').classList.add('active');
+    });
+  }
+  async function confirmLogout() {
+    await fetch('/api/auth/logout', {method:'POST'});
+    window.location.href = '/login';
+  }
+</script>
+</body>
+</html>

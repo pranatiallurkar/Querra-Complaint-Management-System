@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Complaints | Querra</title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand"><div class="logo">Q</div><div>Querra</div></div>
+        <nav class="nav">
+          <a href="/admin_dashboard"><i class="fa fa-gauge-high"></i> Dashboard</a>
+          <a class="active" href="/manage_complaints"><i class="fa fa-clipboard-list"></i> Manage Complaints</a>
+          <a href="/admin_users"><i class="fa fa-users"></i> Users</a>
+          <a href="/admin_departments"><i class="fa fa-building"></i> Departments</a>
+          <a href="/admin_categories"><i class="fa fa-tags"></i> Categories</a>
+          
+          <a href="#" class="logout-link" id="logoutLink"><i class="fa fa-right-from-bracket"></i> Logout</a>
+        </nav>
+        <div class="footer">Admin Panel <span class="small muted">v2.0</span></div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div><h1><i class="fa fa-clipboard-list" style="color:var(--accent);margin-right:8px;"></i>Manage Complaints</h1></div>
+          <div class="actions">
+            <a class="btn btn-outline btn-sm" href="/admin_dashboard"><i class="fa fa-arrow-left"></i> Dashboard</a>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="filters">
+            <input id="q" class="select" placeholder="Search complaints..." style="min-width:200px;" />
+            <select id="statusFilter" class="select"><option value="">All Statuses</option></select>
+            <select id="priorityFilter" class="select">
+              <option value="">All Priorities</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+            <button id="applyBtn" class="btn btn-primary btn-sm"><i class="fa fa-filter"></i> Filter</button>
+          </div>
+          <div id="adminTable" class="table-wrapper">
+            <div style="text-align:center;padding:40px 0;"><div class="loader" style="margin:0 auto 12px;"></div><span class="muted">Loading complaints...</span></div>
+          </div>
+        </section>
+
+        <!-- Status Update Modal -->
+        <div id="statusModal" class="modal-overlay hidden">
+          <div class="modal">
+            <h3><i class="fa fa-pen-to-square" style="color:var(--accent);margin-right:8px;"></i>Update Complaint</h3>
+            <div class="form-field">
+              <label>Select New Status</label>
+              <select id="modalStatusSelect" class="select" style="width:100%;"></select>
+            </div>
+            <div class="form-field">
+              <label>Priority</label>
+              <select id="modalPrioritySelect" class="select" style="width:100%;">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Admin Remarks (Optional)</label>
+              <textarea id="modalRemark" placeholder="Add details about this update..." style="width:100%; min-height:80px;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+              <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+              <button class="btn btn-primary btn-sm" id="modalSaveBtn">Save Update</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bar">© 2026 Querra — Admin Panel</div>
+      </main>
+    </div>
+
+    <script>
+      let currentEditId = null;
+
+      
+        
+
+      async function loadStatus(){
+        const res = await fetch('/api/status');
+        const json = await res.json();
+        if(json.success){
+          const opts = json.status.map(s=>`<option value="${s.status_id}">${s.status_name}</option>`).join('');
+          document.getElementById('statusFilter').innerHTML = '<option value="">All Statuses</option>' + opts;
+          document.getElementById('modalStatusSelect').innerHTML = opts;
+        }
+      }
+
+      async function fetchComplaints(){
+        const q = document.getElementById('q').value.trim();
+        const status = document.getElementById('statusFilter').value;
+        const priority = document.getElementById('priorityFilter').value;
+        const params = new URLSearchParams();
+        if(q) params.set('q',q);
+        if(status) params.set('status',status);
+        if(priority) params.set('priority',priority);
+
+        const res = await fetch('/api/complaints?'+params.toString());
+        const json = await res.json();
+        if(!json.success){ document.getElementById('adminTable').innerHTML='<div class="muted text-center" style="padding:30px;">Failed to load complaints.</div>'; return; }
+        if(!json.complaints.length){ document.getElementById('adminTable').innerHTML='<div class="muted text-center" style="padding:40px;"><i class="fa fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No complaints found.</div>'; return; }
+
+        const rows = json.complaints.map(c => {
+          const statusClass = c.status_name.toLowerCase() === 'resolved' ? 'resolved' :
+                              c.status_name.toLowerCase() === 'open' ? 'open' : 'progress';
+          return `<tr>
+            <td><span class="small muted">#${c.complaint_id}</span></td>
+            <td><strong>${c.title}</strong></td>
+            <td>${c.dept_name || '—'}</td>
+            <td>${c.category_name || '—'}</td>
+            <td>${c.user_name || '—'}</td>
+            <td><span class="badge badge-${c.priority.toLowerCase()}">${c.priority}</span></td>
+            <td><span class="badge badge-${statusClass}">${c.status_name}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="openStatusModal(${c.complaint_id}, '${c.priority}')"><i class="fa fa-pen"></i></button>
+              <button class="btn btn-sm btn-danger" onclick="deleteComplaint(${c.complaint_id})"><i class="fa fa-trash"></i></button>
+            </td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('adminTable').innerHTML = `<table>
+          <thead><tr><th>ID</th><th>Title</th><th>Dept</th><th>Category</th><th>User</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      }
+
+      function openStatusModal(id, currentPriority) {
+        currentEditId = id;
+        document.getElementById('modalPrioritySelect').value = currentPriority || 'Low';
+        document.getElementById('statusModal').classList.remove('hidden');
+      }
+
+      function closeModal() {
+        document.getElementById('statusModal').classList.add('hidden');
+        currentEditId = null;
+      }
+
+      document.getElementById('modalSaveBtn').addEventListener('click', async () => {
+        if(!currentEditId) return;
+        const statusId = document.getElementById('modalStatusSelect').value;
+        const priority = document.getElementById('modalPrioritySelect').value;
+        const remark = document.getElementById('modalRemark').value.trim();
+        const res = await fetch(`/api/complaints/${currentEditId}`, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+             status_id: parseInt(statusId),
+             priority: priority,
+             remark: remark
+          })
+        });
+        const json = await res.json();
+        if(!json.success){ alert(json.error || 'Update failed'); return; }
+        document.getElementById('modalRemark').value = '';
+        closeModal();
+        fetchComplaints();
+      });
+
+      async function deleteComplaint(id){
+        if(!confirm('Delete this complaint permanently?')) return;
+        const res = await fetch(`/api/complaints/${id}`, {method:'DELETE'});
+        const json = await res.json();
+        if(!json.success){ alert(json.error || 'Unable to delete'); return; }
+        fetchComplaints();
+      }
+
+      document.getElementById('applyBtn').addEventListener('click', fetchComplaints);
+      document.getElementById('q').addEventListener('keyup', e => { if(e.key==='Enter') fetchComplaints(); });
+      document.getElementById('statusModal').addEventListener('click', e => { if(e.target === e.currentTarget) closeModal(); });
+
+      loadStatus();
+      fetchComplaints();
+    </script>
+  
+<div id="logoutModalOverlay" class="logout-modal-overlay">
+  <div class="logout-modal">
+    <h3 style="margin-bottom:12px;"><i class="fa fa-right-from-bracket" style="color:var(--accent);"></i> Logout</h3>
+    <p style="margin-bottom:24px;" class="muted">Are you sure you want to logout?</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-outline" onclick="document.getElementById('logoutModalOverlay').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<script>
+  if(document.getElementById('logoutLink')) {
+    document.getElementById('logoutLink').replaceWith(document.getElementById('logoutLink').cloneNode(true));
+    document.getElementById('logoutLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('logoutModalOverlay').classList.add('active');
+    });
+  }
+  async function confirmLogout() {
+    await fetch('/api/auth/logout', {method:'POST'});
+    window.location.href = '/login';
+  }
+</script>
+</body>
+</html>

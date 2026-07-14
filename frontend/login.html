@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Querra | Login</title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      .login-container {
+        width: 100%; max-width: 960px; margin: 0 auto; padding: 24px;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: stretch;
+      }
+      .auth-card { position: relative; overflow: hidden; }
+      .auth-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        border-radius: 18px 18px 0 0;
+      }
+      .admin-card::before { background: linear-gradient(90deg, #ef4444, #f97316); }
+      .user-card::before { background: linear-gradient(90deg, #7c5cfc, #38d1ff); }
+      .card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-top: 8px; }
+      .card-header .icon-circle {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+      }
+      .admin-card .icon-circle { background: rgba(239,68,68,0.12); color: #f87171; }
+      .user-card .icon-circle { background: rgba(124,92,252,0.12); color: #a78bfa; }
+      .card-header h2 { margin: 0; font-size: 1.35rem; }
+      .card-header .subtitle { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+      .tab-row { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+      .tab-row .tab-btn { font-family: var(--font-body); }
+      .form-field { margin-bottom: 16px; }
+      .form-field input { width: 100%; }
+      .demo-hint {
+        margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+        text-align: center; font-size: 0.75rem; color: var(--muted);
+      }
+      .demo-hint code { background: var(--glass); padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; }
+      @media (max-width: 700px) { .login-container { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body class="auth-page">
+    <div style="text-align: center; margin: 40px auto 20px; max-width: 800px; padding: 0 20px;">
+      <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: 2px;">
+        <i class="fa fa-bolt" style="color:var(--accent);margin-right:12px;"></i><span class="text-gradient">Querra</span>
+      </h1>
+      <h3 style="color: var(--accent); font-weight: 500; margin-bottom: 16px; font-size: 1.2rem;">Got an issue? We got u.</h3>
+      <p style="color: var(--muted); line-height: 1.6; max-width: 600px; margin: 0 auto;">
+        Welcome to Querra, the ultimate, unified platform designed to track, manage, and resolve your complaints with absolute transparency and efficiency.
+      </p>
+    </div>
+    
+    <div class="login-container">
+
+      <!-- Left: Admin Login -->
+      <div class="auth-card admin-card">
+        <div class="card-header">
+          <div class="icon-circle"><i class="fa fa-shield-halved"></i></div>
+          <div>
+            <h2>Admin Portal</h2>
+            <div class="subtitle">Administrative access only</div>
+          </div>
+        </div>
+        <form id="adminLoginForm">
+          <div class="form-field">
+            <label for="adminEmail">Email Address</label>
+            <input id="adminEmail" name="email" type="email" required autocomplete="username" placeholder="admin@example.com" />
+          </div>
+          <div class="form-field">
+            <label for="adminPassword">Password</label>
+            <input id="adminPassword" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" />
+          </div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">
+            <i class="fa fa-right-to-bracket"></i> Admin Login
+          </button>
+          <div id="adminAlert" class="alert hidden" style="margin-top:14px;"></div>
+        </form>
+      </div>
+
+      <!-- Right: User Login/Signup -->
+      <div class="auth-card user-card">
+        <div class="card-header">
+          <div class="icon-circle"><i class="fa fa-user"></i></div>
+          <div>
+            <h2>User Account</h2>
+            <div class="subtitle">Login or create a new account</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-row">
+          <button class="tab-btn active" data-tab="login">
+            <i class="fa fa-right-to-bracket"></i> Login
+          </button>
+          <button class="tab-btn" data-tab="signup">
+            <i class="fa fa-user-plus"></i> Sign Up
+          </button>
+        </div>
+
+        <!-- Login Tab -->
+        <div class="tab-content" id="loginTab">
+          <form id="userLoginForm">
+            <div class="form-field">
+              <label for="userEmail">Email Address</label>
+              <input id="userEmail" name="email" type="email" required autocomplete="username" placeholder="you@email.com" />
+            </div>
+            <div class="form-field">
+              <label for="userPassword">Password</label>
+              <input id="userPassword" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" />
+            </div>
+            <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">
+              <i class="fa fa-right-to-bracket"></i> Login
+            </button>
+            <div id="userLoginAlert" class="alert hidden" style="margin-top:14px;"></div>
+          </form>
+        </div>
+
+        <!-- Signup Tab -->
+        <div class="tab-content" id="signupTab" style="display:none;">
+          <form id="userSignupForm">
+            <div class="form-field">
+              <label for="signupName">Full Name</label>
+              <input id="signupName" name="name" type="text" required autocomplete="name" placeholder="John Doe" />
+            </div>
+            <div class="form-field">
+              <label for="signupEmail">Email Address</label>
+              <input id="signupEmail" name="email" type="email" required autocomplete="email" placeholder="you@email.com" />
+            </div>
+            <div class="form-field">
+              <label for="signupPassword">Password</label>
+              <input id="signupPassword" name="password" type="password" required autocomplete="new-password" placeholder="Min 6 characters" />
+            </div>
+            <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">
+              <i class="fa fa-user-plus"></i> Create Account
+            </button>
+            <div id="userSignupAlert" class="alert hidden" style="margin-top:14px;"></div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+          });
+          document.getElementById('loginTab').style.display = tab === 'login' ? 'block' : 'none';
+          document.getElementById('signupTab').style.display = tab === 'signup' ? 'block' : 'none';
+        });
+      });
+
+      // Admin Login
+      document.getElementById('adminLoginForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const alertEl = document.getElementById('adminAlert');
+        const payload = Object.fromEntries(new FormData(e.target).entries());
+        alertEl.className = 'alert success';
+        alertEl.textContent = 'Logging in...';
+        alertEl.classList.remove('hidden');
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Login failed');
+          if (json.role !== 'admin') throw new Error('Admin access required');
+          alertEl.textContent = 'Welcome back, Admin!';
+          setTimeout(() => window.location.href = '/admin_dashboard', 800);
+        } catch (err) {
+          alertEl.className = 'alert error';
+          alertEl.textContent = err.message;
+        }
+      });
+
+      // User Login
+      document.getElementById('userLoginForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const alertEl = document.getElementById('userLoginAlert');
+        const payload = Object.fromEntries(new FormData(e.target).entries());
+        alertEl.className = 'alert success';
+        alertEl.textContent = 'Logging in...';
+        alertEl.classList.remove('hidden');
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Login failed');
+          if (json.role === 'admin') {
+            setTimeout(() => window.location.href = '/admin_dashboard', 800);
+          } else {
+            setTimeout(() => window.location.href = '/user_dashboard', 800);
+          }
+        } catch (err) {
+          alertEl.className = 'alert error';
+          alertEl.textContent = err.message;
+        }
+      });
+
+      // User Signup
+      document.getElementById('userSignupForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const alertEl = document.getElementById('userSignupAlert');
+        const payload = Object.fromEntries(new FormData(e.target).entries());
+        alertEl.className = 'alert success';
+        alertEl.textContent = 'Creating account...';
+        alertEl.classList.remove('hidden');
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Registration failed');
+          alertEl.textContent = 'Account created! Switching to login...';
+          setTimeout(() => {
+            document.querySelector('[data-tab="login"]').click();
+            document.getElementById('userEmail').value = payload.email;
+          }, 1000);
+        } catch (err) {
+          alertEl.className = 'alert error';
+          alertEl.textContent = err.message;
+        }
+      });
+    </script>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h3>Querra &copy; 2026</h3>
+          <p>Track every issue.</p>
+        </div>
+        <div class="footer-links">
+          <a href="#" onclick="openGenericModal('termsModal'); return false;">Terms & Conditions</a> &bull;
+          <a href="#" onclick="openGenericModal('privacyModal'); return false;">Privacy Policy</a> &bull;
+          <a href="#" onclick="openGenericModal('contactModal'); return false;">Contact Us</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Modals -->
+    <div id="termsModal" class="generic-modal-overlay">
+      <div class="generic-modal">
+        <h3>Terms & Conditions</h3>
+        <p>Welcome to Querra. By using our platform, you agree to abide by these terms. Querra provides a unified complaint tracking service intended for personal and enterprise issue resolution.</p>
+        <p>You agree to provide accurate information when filing a complaint and refrain from abusive language. Administrators reserve the right to delete or modify complaints that violate our community standards.</p>
+        <button class="btn btn-primary modal-close-btn" onclick="closeGenericModal('termsModal')">I Understand</button>
+      </div>
+    </div>
+
+    <div id="privacyModal" class="generic-modal-overlay">
+      <div class="generic-modal">
+        <h3>Privacy Policy</h3>
+        <p>Your privacy is important to us. Querra collects basic information (such as your name and email) solely to facilitate communication regarding your filed complaints.</p>
+        <p>We implement industry-standard encryption and do not sell your personal data to third parties. All complaint tracking history is securely logged within our internal database.</p>
+        <button class="btn btn-primary modal-close-btn" onclick="closeGenericModal('privacyModal')">Close</button>
+      </div>
+    </div>
+
+    <div id="contactModal" class="generic-modal-overlay">
+      <div class="generic-modal">
+        <h3>Contact Us</h3>
+        <p>Need further assistance? We are here to help!</p>
+        <p><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px;"></i> support@querra.com</p>
+        <p><i class="fa fa-phone" style="color:var(--accent);margin-right:8px;"></i> +1 (555) 123-4567</p>
+        <p><i class="fa fa-location-dot" style="color:var(--accent);margin-right:8px;"></i> 123 Innovation Drive, Tech City</p>
+        <button class="btn btn-primary modal-close-btn" onclick="closeGenericModal('contactModal')">Close</button>
+      </div>
+    </div>
+
+    <script>
+      function openGenericModal(id) {
+        document.getElementById(id).classList.add('active');
+      }
+      function closeGenericModal(id) {
+        document.getElementById(id).classList.remove('active');
+      }
+    </script>
+  </body>
+</html>

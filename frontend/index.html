@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Complaint Dashboard | Querra</title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand"><div class="logo">Q</div><div>Querra</div></div>
+        <nav class="nav">
+          <a class="active" href="/"><i class="fa fa-gauge-high"></i> Dashboard</a>
+          <a href="/login"><i class="fa fa-right-to-bracket"></i> Login</a>
+          <a href="/login"><i class="fa fa-user-plus"></i> Register</a>
+        </nav>
+        <div class="footer">v2.0 <span class="small muted">System portal</span></div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="searchbox">
+            <i class="fa fa-search muted"></i>
+            <input id="globalSearch" placeholder="Search system public info..."/>
+          </div>
+          <div class="actions">
+            <a class="btn btn-primary" href="/login"><i class="fa fa-right-to-bracket"></i> Sign In</a>
+          </div>
+        </div>
+
+        <section class="hero-panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+            <div>
+              <h1 style="margin:0;font-family:var(--font-display);font-size:1.8rem;margin-bottom:8px;">Welcome to Querra</h1>
+              <p class="muted">Modern complaint management with powerful tracking and analytics.</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <a class="btn btn-outline" href="/login">Submit Complaint</a>
+              <div class="loader" id="heroLoader" style="display:none;width:24px;height:24px;border-width:2px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="cards" aria-label="Summary cards">
+          <div class="card">
+            <div class="icon purple"><i class="fa fa-file-lines"></i></div>
+            <div class="title">Total Complaints</div>
+            <div class="value" id="totalComplaints">—</div>
+            <div class="trend muted">System wide</div>
+          </div>
+          <div class="card">
+            <div class="icon orange"><i class="fa fa-hourglass-half"></i></div>
+            <div class="title">Open</div>
+            <div class="value" id="openCount">—</div>
+            <div class="trend muted">Pending resolution</div>
+          </div>
+          <div class="card">
+            <div class="icon red"><i class="fa fa-triangle-exclamation"></i></div>
+            <div class="title">High Priority</div>
+            <div class="value" id="highCount">—</div>
+            <div class="trend muted">Needs attention</div>
+          </div>
+          <div class="card">
+            <div class="icon blue"><i class="fa fa-building"></i></div>
+            <div class="title">Departments</div>
+            <div class="value" id="deptCount">—</div>
+            <div class="trend muted">Active departments</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 class="section-heading" style="margin:0"><i class="fa fa-clock-rotate-left" style="color:var(--accent);margin-right:8px;"></i>Recent Activity</h3>
+            <div class="muted small"><i class="fa fa-sync-alt"></i> Auto-refresh</div>
+          </div>
+
+          <div id="previewTable" class="table-wrapper">
+            <div style="text-align:center;padding:40px 0;"><div class="loader" style="margin:0 auto 12px;"></div></div>
+          </div>
+        </section>
+
+        <div class="footer-bar">© 2026 Querra — Modern, elegant system</div>
+      </main>
+    </div>
+
+    <script>
+      const fetchData = async () => {
+        try{
+          document.getElementById('heroLoader').style.display='inline-block';
+          // Using a public-friendly endpoint if one existed, 
+          // or gracefully handling failure if the api requires login.
+          // Since index was accessing /api/complaints, we wrap in try-catch
+          const res = await fetch('/api/complaints');
+          if(res.status === 401) {
+             document.getElementById('previewTable').innerHTML = '<div class="muted text-center" style="padding:40px;"><i class="fa fa-lock" style="font-size:2rem;display:block;margin-bottom:8px;"></i>Please login to view system data</div>';
+             document.querySelectorAll('.value').forEach(el => el.textContent = '-');
+             return;
+          }
+          
+          const json = await res.json();
+          if(!json.success) throw new Error(json.error || 'Failed');
+          const data = json.data || [];
+          document.getElementById('totalComplaints').textContent = data.length;
+          document.getElementById('openCount').textContent = data.filter(c=>c.status_name && c.status_name.toLowerCase().includes('open')).length;
+          document.getElementById('highCount').textContent = data.filter(c=>c.priority && c.priority.toLowerCase()==='high').length;
+          const depts = new Set(data.map(d=>d.dept_name));
+          document.getElementById('deptCount').textContent = depts.size;
+
+          const rows = data.slice(0,6).map(c => {
+             const statusClass = c.status_name.toLowerCase() === 'resolved' ? 'resolved' :
+                                 c.status_name.toLowerCase() === 'open' ? 'open' : 'progress';
+             return `<tr>
+               <td><span class="small muted">#${c.complaint_id}</span></td>
+               <td><strong>${c.title}</strong></td>
+               <td>${c.dept_name || '—'}</td>
+               <td><span class="badge badge-${statusClass}">${c.status_name}</span></td>
+             </tr>`;
+          }).join('') || '<tr><td colspan=4 class="muted text-center" style="padding:20px;">No recent activity</td></tr>';
+          
+          document.getElementById('previewTable').innerHTML = `<table>
+            <thead><tr><th>ID</th><th>Title</th><th>Department</th><th>Status</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+        }catch(err){
+          console.error(err);
+        }finally{
+          document.getElementById('heroLoader').style.display='none';
+        }
+      }
+
+      fetchData();
+      setInterval(fetchData, 10000);
+    </script>
+  
+<div id="logoutModalOverlay" class="logout-modal-overlay">
+  <div class="logout-modal">
+    <h3 style="margin-bottom:12px;"><i class="fa fa-right-from-bracket" style="color:var(--accent);"></i> Logout</h3>
+    <p style="margin-bottom:24px;" class="muted">Are you sure you want to logout?</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-outline" onclick="document.getElementById('logoutModalOverlay').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+<script>
+  if(document.getElementById('logoutLink')) {
+    document.getElementById('logoutLink').replaceWith(document.getElementById('logoutLink').cloneNode(true));
+    document.getElementById('logoutLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('logoutModalOverlay').classList.add('active');
+    });
+  }
+  async function confirmLogout() {
+    await fetch('/api/auth/logout', {method:'POST'});
+    window.location.href = '/login';
+  }
+</script>
+</body>
+</html>
